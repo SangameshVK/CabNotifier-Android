@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Cab Notifier</string>
+    <string name="NotifyingMsg">Notifying your cab number...</string>
+</resources>
