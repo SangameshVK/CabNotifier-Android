@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
@@ -15,21 +16,48 @@ import com.sangamesh.android.cabnotifier.MainActivity;
 
 public class BackgroundService extends Service {
 
-    private static final int NOTIF_ID = 41474148;
-    private static final String NOTIF_CHANNEL_ID = "100" ;
+    private static final int NOTIFICATION_ID = 41474148;
+    private static final String NOTIFICATION_CHANNEL_ID = "100";
+
+    private MessageListener mMessageListener;
+
+    private static final String TAG = "BackgroundService";
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
+        //TODO: Remove next LOC
+        //intentFilter.addAction("android.intent.action.SCREEN_ON");
+        intentFilter.setPriority(100);
+        mMessageListener = new MessageListener();
+        registerReceiver(mMessageListener, intentFilter);
+        Log.i(TAG, "Registered MessageListener");
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("BackgroundService", "OnStartCommand in background thread");
         //startForeground();
-        new Thread(dummyTask).start();
-        return super.onStartCommand(intent, flags, startId);
+        //new Thread(dummyTask).start();
+        //return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mMessageListener);
+    }
+
+
+    /*
+    //TODO: Get rid of redundant code
     private Runnable dummyTask = new Runnable() {
         public void run() {
             int count = 0;
@@ -41,9 +69,8 @@ public class BackgroundService extends Service {
                     Log.e("Runnable", "InterruptedException: " + e.toString());
                 }
                 ++count;
-                if (count % 10 == 0) {
-                    ++count;
-                    --count;
+                if (count % 100 == 0) {
+                    Log.i(TAG, "Count % 100 is 0");
                 }
                 if (count == 10000) {
                     count = 0;
@@ -52,6 +79,7 @@ public class BackgroundService extends Service {
         }
     };
 
+    /*
     private void startForeground() {
         Intent notificationIntent = new Intent(this, MainActivity.class);
 
@@ -66,10 +94,5 @@ public class BackgroundService extends Service {
                 .setContentText("Service is running background")
                 .setContentIntent(pendingIntent)
                 .build());
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-    }
+    }*/
 }
