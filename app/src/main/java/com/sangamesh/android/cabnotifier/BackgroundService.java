@@ -1,25 +1,32 @@
 package com.sangamesh.android.cabnotifier;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Parcel;
+import android.service.notification.StatusBarNotification;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.util.Log;
+import android.widget.Toast;
 
-import com.sangamesh.android.cabnotifier.MainActivity;
+import com.sangamesh.android.cabnotifier.Constants;
 
 public class BackgroundService extends Service {
 
-    private static final int NOTIFICATION_ID = 41474148;
-    private static final String NOTIFICATION_CHANNEL_ID = "100";
+    private static final int FOREGROUND_NOTIFICATION_ID = 41474147;
 
     private MessageListener mMessageListener;
+    private boolean mForegroundNotified = false;
 
     private static final String TAG = "BackgroundService";
     @Override
@@ -29,7 +36,44 @@ public class BackgroundService extends Service {
 
     @Override
     public void onCreate() {
+        Log.i(TAG, "OnCreate enter");
+        showSmallToast("Creating Service");
         super.onCreate();
+        registerMessageListener();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, "onStartCommand enter");
+        showSmallToast("Starting Service");
+        // This is necessary for notifications to work even when app is cleared from recents list.
+        startForeground();
+        return super.onStartCommand(intent, flags, startId);
+        //Just in case we need START_STICKY in future
+        //return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.i(TAG, "onDestroy enter");
+        showSmallToast("Service Destroyed");
+        mForegroundNotified = false;
+        super.onDestroy();
+        unregisterReceiver(mMessageListener);
+    }
+
+    /* Not seeming to add value apart from registering again.
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.i(TAG, "onTaskRemoved enter");
+        showSmallToast("Task removed");
+        //registerMessageListener();
+        super.onTaskRemoved(rootIntent);
+        // In case we use this function, need to remove one registerMessageListener.
+        registerMessageListener();
+    }*/
+
+    private void registerMessageListener() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
         //TODO: Remove next LOC
@@ -38,26 +82,17 @@ public class BackgroundService extends Service {
         mMessageListener = new MessageListener();
         registerReceiver(mMessageListener, intentFilter);
         Log.i(TAG, "Registered MessageListener");
+        //TODO: Remove all toasts
+        showSmallToast("Registered Message Listener");
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("BackgroundService", "OnStartCommand in background thread");
-        //startForeground();
-        //new Thread(dummyTask).start();
-        //return super.onStartCommand(intent, flags, startId);
-        return START_STICKY;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver(mMessageListener);
+    private void showSmallToast(String toastMessage) {
+        Toast.makeText(getApplicationContext(), toastMessage, Toast.LENGTH_SHORT).show();
     }
 
 
     /*
-    //TODO: Get rid of redundant code
+    //TODO: Get rid of redundant code and all unnecessary commented code
     private Runnable dummyTask = new Runnable() {
         public void run() {
             int count = 0;
@@ -77,22 +112,26 @@ public class BackgroundService extends Service {
                 }
             }
         }
-    };
+    };*/
 
-    /*
+
     private void startForeground() {
-        Intent notificationIntent = new Intent(this, MainActivity.class);
+        if (mForegroundNotified) {
+            showSmallToast("Foreground Notified already");
+            return;
+        }
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
                 notificationIntent, 0);
-
-        startForeground(NOTIF_ID, new NotificationCompat.Builder(this,
-                NOTIF_CHANNEL_ID) // don't forget create a notification channel first
+        startForeground(FOREGROUND_NOTIFICATION_ID, new NotificationCompat.Builder(this,
+                Constants.NOTIFICATION_CHANNEL_ID) // don't forget create a notification channel first
                 .setOngoing(true)
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText("Service is running background")
                 .setContentIntent(pendingIntent)
                 .build());
-    }*/
+        mForegroundNotified = true;
+    }
 }
