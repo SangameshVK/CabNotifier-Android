@@ -25,7 +25,7 @@ public class BackgroundService extends Service {
 
     private static final int FOREGROUND_NOTIFICATION_ID = 41474147;
 
-    private MessageListener mMessageListener;
+    private MessageListener mMessageListener = null;
     private boolean mForegroundNotified = false;
 
     private static final String TAG = "BackgroundService";
@@ -39,18 +39,17 @@ public class BackgroundService extends Service {
         Log.i(TAG, "OnCreate enter");
         showSmallToast("Creating Service");
         super.onCreate();
-        registerMessageListener();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand enter");
         showSmallToast("Starting Service");
+        registerMessageListener();
         // This is necessary for notifications to work even when app is cleared from recents list.
         startForeground();
-        return super.onStartCommand(intent, flags, startId);
-        //Just in case we need START_STICKY in future
-        //return START_STICKY;
+        //return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     @Override
@@ -58,22 +57,26 @@ public class BackgroundService extends Service {
         Log.i(TAG, "onDestroy enter");
         showSmallToast("Service Destroyed");
         mForegroundNotified = false;
+        mMessageListener = null;
         super.onDestroy();
         unregisterReceiver(mMessageListener);
     }
 
-    /* Not seeming to add value apart from registering again.
+    // Not seeming to add any value?? Here because of defensive programming
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         Log.i(TAG, "onTaskRemoved enter");
         showSmallToast("Task removed");
         //registerMessageListener();
-        super.onTaskRemoved(rootIntent);
-        // In case we use this function, need to remove one registerMessageListener.
-        registerMessageListener();
-    }*/
+        //super.onTaskRemoved(rootIntent);
+        Intent background = new Intent(getApplicationContext(), BackgroundService.class);
+        getApplicationContext().startService(background);
+    }
 
     private void registerMessageListener() {
+        if (mMessageListener != null) {
+            unregisterReceiver(mMessageListener);
+        }
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
         //TODO: Remove next LOC
@@ -124,7 +127,7 @@ public class BackgroundService extends Service {
         Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
                 notificationIntent, 0);
-        startForeground(FOREGROUND_NOTIFICATION_ID, new NotificationCompat.Builder(this,
+        startForeground(Constants.CAB_NOTIFICATION_ID, new NotificationCompat.Builder(this,
                 Constants.NOTIFICATION_CHANNEL_ID) // don't forget create a notification channel first
                 .setOngoing(true)
                 .setSmallIcon(R.drawable.ic_launcher_background)

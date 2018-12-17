@@ -22,8 +22,8 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".BackgroundService" />
-            <!-- android:stopWithTask="false" Just in case we need it in future-->
+            android:name=".BackgroundService"
+            android:stopWithTask="false" /><!-- Just in case we need it in future-->
     </application>
 
 </manifest>

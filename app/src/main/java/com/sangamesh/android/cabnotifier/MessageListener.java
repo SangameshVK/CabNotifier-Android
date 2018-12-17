@@ -19,19 +19,17 @@ public class MessageListener extends BroadcastReceiver {
 
     private static final String SMS_RECEIVED_ACTION = "android.provider.Telephony.SMS_RECEIVED";
     private static final String TAG = "MessageListener";
-    private static final int CAB_NOTIFICATION_ID = 41474148;
-    private static final int ERROR_NOTIFICATION_ID = 41474149;
 
     private String mSenderSubStrings[] = {"MISETS", "MVINSY"}; //TODO: Load from sharedpreferences
     private String mDelimiters;
     private String mRegex;
 
-    private static String sampleMsg = "Your drop is scheduled on 12/14/18 5:31 PM by Cab: TW - 497 (KA-41 C 1736)";
+    private static String sampleMsg = "Your drop is scheduled on 12/14/18 5:31 PM by Cab: TW - 497 (KA-41 AC 1736)";
 
     public MessageListener() {
         mDelimiters = "[\\s-]";
-        mRegex =  ".*([A-Za-z]{2}" + mDelimiters + "\\d{2}" + mDelimiters
-                + "[A-Za-z]" + mDelimiters + "\\d{%d}).*";
+        mRegex =  ".*([A-Za-z]{2}" + mDelimiters + "\\d{1,2}" + mDelimiters
+                + "[A-Za-z]{1,2}" + mDelimiters + "\\d{1,4}).*";
     }
 
     @Override
@@ -90,17 +88,14 @@ public class MessageListener extends BroadcastReceiver {
     }
 
     private String spotCabNumber(String messageBody) {
-        for (int i = 4; i > 0; --i) {
-            String patternString = String.format(mRegex, i);
-            Pattern pattern = Pattern.compile(patternString);
-            Matcher matcher = pattern.matcher(messageBody);
-            if (matcher.find()) {
-                String cabNumber = matcher.group(1);
-                Log.i(TAG, "Identified Cab Number: " + cabNumber);
-                return cabNumber;
-            }
-            Log.w(TAG, "Could not find Vehicle number for i value: " + i);
+        Pattern pattern = Pattern.compile(mRegex);
+        Matcher matcher = pattern.matcher(messageBody);
+        if (matcher.find()) {
+            String cabNumber = matcher.group(1);
+            Log.i(TAG, "Identified Cab Number: " + cabNumber);
+            return cabNumber;
         }
+        Log.e(TAG, "Could not find Vehicle number in message body: " + messageBody);
         return null;
     }
 
@@ -112,7 +107,7 @@ public class MessageListener extends BroadcastReceiver {
                 .setContentText(cabNumber)
                 .setPriority(NotificationCompat.PRIORITY_MAX);
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.notify(CAB_NOTIFICATION_ID, notificationBuilder.build());
+        notificationManager.notify(Constants.CAB_NOTIFICATION_ID, notificationBuilder.build());
     }
 
     private void notifyError(Context context) {
@@ -121,6 +116,6 @@ public class MessageListener extends BroadcastReceiver {
                 .setContentText("Could not Identify Cab number in the text message")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.notify(ERROR_NOTIFICATION_ID, notificationBuilder.build());
+        notificationManager.notify(Constants.ERROR_NOTIFICATION_ID, notificationBuilder.build());
     }
 }
