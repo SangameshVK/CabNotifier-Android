@@ -62,16 +62,16 @@ public class BackgroundService extends Service {
         unregisterReceiver(mMessageListener);
     }
 
-    // Not seeming to add any value?? Here because of defensive programming
+    /* Not seeming to add any value??
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         Log.i(TAG, "onTaskRemoved enter");
         showSmallToast("Task removed");
         //registerMessageListener();
-        //super.onTaskRemoved(rootIntent);
+        super.onTaskRemoved(rootIntent);
         Intent background = new Intent(getApplicationContext(), BackgroundService.class);
         getApplicationContext().startService(background);
-    }
+    }*/
 
     private void registerMessageListener() {
         if (mMessageListener != null) {
@@ -90,7 +90,7 @@ public class BackgroundService extends Service {
     }
 
     private void showSmallToast(String toastMessage) {
-        Toast.makeText(getApplicationContext(), toastMessage, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(), toastMessage, Toast.LENGTH_SHORT).show();
     }
 
 
@@ -118,6 +118,7 @@ public class BackgroundService extends Service {
     };*/
 
 
+
     private void startForeground() {
         if (mForegroundNotified) {
             showSmallToast("Foreground Notified already");
@@ -127,7 +128,7 @@ public class BackgroundService extends Service {
         Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
                 notificationIntent, 0);
-        startForeground(Constants.CAB_NOTIFICATION_ID, new NotificationCompat.Builder(this,
+        startForeground(Constants.FOREGROUND_NOTIFICATION_ID, new NotificationCompat.Builder(getApplicationContext(),
                 Constants.NOTIFICATION_CHANNEL_ID) // don't forget create a notification channel first
                 .setOngoing(true)
                 .setSmallIcon(R.drawable.ic_launcher_background)

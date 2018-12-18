@@ -38,7 +38,7 @@ public class MessageListener extends BroadcastReceiver {
 
         try {
             String action = intent.getAction();
-            Toast.makeText(context, "Received Action " + action, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(context, "Received Action " + action, Toast.LENGTH_SHORT).show();
             if (!SMS_RECEIVED_ACTION.equals(action)) {
                 //TODO: Remove these two LOC
                 //String cabNumber = spotCabNumber(sampleMsg);
@@ -84,7 +84,7 @@ public class MessageListener extends BroadcastReceiver {
             }
         }
         //TODO: change this to false
-        return true;
+        return false;
     }
 
     private String spotCabNumber(String messageBody) {
@@ -105,7 +105,10 @@ public class MessageListener extends BroadcastReceiver {
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, Constants.NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setContentText(cabNumber)
-                .setPriority(NotificationCompat.PRIORITY_MAX);
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setOngoing(true)
+                .setTimeoutAfter(Constants.CAB_NOTIFICATION_TIMEOUT);
+        //TODO: Use a dismiss button instead
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(Constants.CAB_NOTIFICATION_ID, notificationBuilder.build());
     }
